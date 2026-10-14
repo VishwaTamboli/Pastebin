@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseConfig } from './config/database.config';
 import { HealthController } from './health/health.controller';
+import { PastesModule } from './pastes/pastes.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { HealthController } from './health/health.controller';
       imports: [ConfigModule],
       useClass: DatabaseConfig,
     }),
+    PastesModule,
   ],
   controllers: [HealthController],
 })

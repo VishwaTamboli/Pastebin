@@ -1,27 +1,46 @@
-import { useEffect, useState } from 'react';
-
-const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { Link, Route, Routes } from 'react-router-dom';
+import CreatePage from './pages/CreatePage.tsx';
+import ViewPage from './pages/ViewPage.tsx';
 
 function App() {
-  const [health, setHealth] = useState<string>('checking...');
-
-  useEffect(() => {
-    fetch(`${apiUrl}/health`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.statusText)))
-      .then((data) => setHealth(data.status ?? 'ok'))
-      .catch(() => setHealth('unreachable'));
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <main className="mx-auto max-w-2xl px-4 py-16">
-        <h1 className="text-3xl font-bold">Pastebin</h1>
-        <p className="mt-2 text-gray-600">
-          Phase 1 project setup. Paste creation arrives in a later phase.
-        </p>
-        <p className="mt-4 rounded border bg-white p-4 text-sm">
-          Backend health: <span className="font-mono">{health}</span>
-        </p>
+      <header className="border-b bg-white">
+        <nav className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+          <Link to="/" className="text-xl font-bold">
+            Paste
+          </Link>
+          <Link
+            to="/"
+            className="text-sm font-semibold text-blue-600 hover:underline"
+          >
+            New paste
+          </Link>
+        </nav>
+      </header>
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <Routes>
+          <Route path="/" element={<CreatePage />} />
+          {/* NOTE: keep any future static routes above /:id. */}
+          <Route path="/:id" element={<ViewPage />} />
+          <Route
+            path="*"
+            element={
+              <section aria-label="Page not found">
+                <h2 className="text-2xl font-bold">Page not found</h2>
+                <p className="mt-2 text-gray-600">
+                  The page you are looking for does not exist.
+                </p>
+                <Link
+                  to="/"
+                  className="mt-4 inline-block rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  Go home
+                </Link>
+              </section>
+            }
+          />
+        </Routes>
       </main>
     </div>
   );
