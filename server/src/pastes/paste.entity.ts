@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PasteVisibility } from './dto/create-paste.dto';
@@ -17,6 +18,7 @@ export class Paste {
   @Column({ type: 'varchar', length: 16, default: 'public' })
   visibility: PasteVisibility;
 
+  @Index('idx_pastes_expires_at')
   @Column({ type: 'timestamp', name: 'expires_at', nullable: true })
   expiresAt: Date | null;
 

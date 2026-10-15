@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ViewPage from './ViewPage';
@@ -68,5 +69,44 @@ describe('ViewPage', () => {
       await screen.findByText(/does not exist or has expired/i),
     ).toBeDefined();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the unlisted badge and a dated expiry when present', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            ...SAMPLE_PASTE,
+            visibility: 'unlisted',
+            expiresAt: '2026-10-15T00:00:00.000Z',
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+    renderAt(SAMPLE_PASTE.id);
+
+    expect(await screen.findByText('hello world')).toBeDefined();
+    expect(screen.getByText('unlisted')).toBeDefined();
+    expect(screen.queryByText('Never')).toBeNull();
+  });
+
+  it('retries loading after a network failure', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async (): Promise<Response> => {
+      throw new TypeError('fetch failed');
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderAt(SAMPLE_PASTE.id);
+
+    expect(await screen.findByText(/could not load paste/i)).toBeDefined();
+
+    fetchMock.mockImplementationOnce(
+      async () => new Response(JSON.stringify(SAMPLE_PASTE), { status: 200 }),
+    );
+    await user.click(await screen.findByRole('button', { name: /retry/i }));
+
+    expect(await screen.findByText('hello world')).toBeDefined();
   });
 });

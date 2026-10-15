@@ -24,6 +24,8 @@ function renderPage() {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  // @ts-expect-error jsdom has no clipboard; remove the test double
+  delete navigator.clipboard;
 });
 
 describe('CreatePage', () => {
@@ -82,5 +84,52 @@ describe('CreatePage', () => {
     expect((await screen.findByRole('alert')).textContent).toMatch(
       /must be one of: public, unlisted/i,
     );
+  });
+
+  it('copies the paste URL to the clipboard', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn(async (_text: string) => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(JSON.stringify(SAMPLE_PASTE), { status: 201 }),
+      ),
+    );
+    renderPage();
+
+    await user.type(screen.getByLabelText(/content/i), 'hello');
+    await user.click(screen.getByRole('button', { name: /create new paste/i }));
+    await user.click(await screen.findByRole('button', { name: /copy link/i }));
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(String(writeText.mock.calls[0]?.[0])).toContain(SAMPLE_PASTE.id);
+    expect(
+      await screen.findByRole('button', { name: /copied!/i }),
+    ).toBeDefined();
+  });
+
+  it('shows a network error and keeps the form content', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('fetch failed');
+      }),
+    );
+    renderPage();
+
+    await user.type(screen.getByLabelText(/content/i), 'hello');
+    await user.click(screen.getByRole('button', { name: /create new paste/i }));
+
+    expect((await screen.findByRole('alert')).textContent).toMatch(
+      /network error/i,
+    );
+    expect(
+      (screen.getByLabelText(/content/i) as HTMLTextAreaElement).value,
+    ).toBe('hello');
   });
 });
