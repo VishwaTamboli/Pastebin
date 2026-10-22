@@ -65,6 +65,24 @@ describe('CreatePasteDto', () => {
       expect(messages.length).toBeGreaterThan(0);
     },
   );
+
+  it('is valid with exactly MAX_PASTE_CONTENT_LENGTH characters', async () => {
+    await expect(
+      constraintMessages({ content: 'x'.repeat(100_000) }),
+    ).resolves.toEqual([]);
+  });
+
+  it('is invalid with more than MAX_PASTE_CONTENT_LENGTH characters', async () => {
+    const messages = await constraintMessages({
+      content: 'x'.repeat(100_001),
+    });
+    expect(messages.length).toBeGreaterThan(0);
+  });
+
+  it('is invalid with empty content', async () => {
+    const messages = await constraintMessages({ content: '   ' });
+    expect(messages.length).toBeGreaterThan(0);
+  });
 });
 
 describe('global ValidationPipe options', () => {
@@ -77,6 +95,15 @@ describe('global ValidationPipe options', () => {
     await expect(
       pipe.transform(
         { content: 'hello', expiry: '1h' },
+        { type: 'body', metatype: CreatePasteDto },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects auth-like properties: no owner fields exist in this phase', async () => {
+    await expect(
+      pipe.transform(
+        { content: 'hello', ownerId: '11111111-1111-4111-8111-111111111111' },
         { type: 'body', metatype: CreatePasteDto },
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
