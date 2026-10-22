@@ -17,7 +17,7 @@ Prepare the Pastebin repository for local development after a colleague clones i
 - Detect installed tools and required versions.
 - Never replace working configuration simply to match a template.
 
-## Step 2: Verify the Git Workflow
+## Step 2: Verify the Git Workflows
 
 - Confirm that `dev` is the development base branch.
 - Inspect the current branch, working tree, and remote configuration.
